@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block body %}
+
+<div class="container">
+    <h1>Palatable</h1>
+    {% if response["success"] %}
+        <div class="container">
+            {{ response["data"] }}
+        </div>
+
+    {% else %}
+        <p>Welcome!</p>
+    {% endif %}
+</div>
+
+{% endblock %}
