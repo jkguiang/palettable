@@ -4,6 +4,7 @@ import cssutils
 import logging
 
 def Parse(url):
+    print("API call: url - {}".format(url))
     # Disable warning messages
     cssutils.log.setLevel(logging.CRITICAL)
     # Grab URL and make some soup
@@ -35,7 +36,7 @@ def Parse(url):
         if count > 10 and "#" in c:
             out[c] = count
 
-    return { "success": True, "data": out }
+    return { "success": True, "result": out }
 
 if __name__ == "__main__":
     Parse("https://stackoverflow.com/questions/20371448/stop-cssutils-from-generating-warning-messages")

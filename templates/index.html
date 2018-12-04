@@ -26,6 +26,7 @@
                 </form>
                 <button class="btn btn-primary" onClick="APICall()">Submit</button>
             </div>
+            <div class="container" id="result" hidden></div>
             <hr>
             <footer>
                 <p>Jonathan Guiang</p>
@@ -37,30 +38,39 @@
     <script>
         function APICall() {
             var mainDiv = $("#main");
+            var resultDiv = $("#result");
+            console.log("passing "+String($("#url").val())+" as 'data'");
             $.ajax({
                 type: 'POST',
                 url: '/result',
-                data: $("#url").val(),
+                data: JSON.stringify({ "url": $("#url").val() }),
+                contentType: 'application/json;charset=UTF-8',
                 success: function(data, status, request) {
-                    mainDiv.html(`<div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 50%"></div></div>`);
-                    status_url = request.getResponseHeader('Location');
-                    Update(status_url, mainDiv);
+                    mainDiv.hide();
+                    resultDiv.html(`<div class="progress"><div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div></div>`).show();
+                    statusURL = request.getResponseHeader('Location');
+                    Update(statusURL, mainDiv, resultDiv);
                 },
                 error: function() {
                     alert('Unexpected error');
                 }
             });
         }
-        function Update(status_url) {
-            $.getJSON(status_url, function(data) {
+        function Update(statusURL, mainDiv, resultDiv) {
+            $.getJSON(statusURL, function(data) {
                 console.log(data);
                 if (data.state === "SUCCESS" && data.hasOwnProperty("result")) {
-                    mainDiv.html(data.result);
+                    resultDiv.html(data.result);
+                }
+                else if (data.state === "FAILURE") {
+                    mainDiv.show();
+                    resultDiv.hide();
                 }
                 else {
                     // rerun in 2 seconds
+                    console.log(data);
                     setTimeout(function() {
-                        Update(status_url);
+                        Update(statusURL, mainDiv, resultDiv);
                     }, 1000);
                 }
             });
