@@ -27,7 +27,8 @@ def APICall(self, url="", nColors=8):
     screenshot = api.GetImage(url)
     # Process image
     self.update_state(state="PROGRESS",
-                      meta={ "status": "Processing image..." })
+                      meta={ "status": "Processing image...",
+                             "result": screenshot })
     image = api.ProcImage(screenshot)
     # Shape data
     self.update_state(state="PROGRESS",
@@ -51,11 +52,9 @@ def Index():
 def Result():
     if request.data:
         url = request.json["url"]
-        nColors = request.json["nColors"]
     else:
         url = ""
-        nColors = ""
-    task = APICall.apply_async(kwargs={ "url":url, "nColors":int(nColors) })
+    task = APICall.apply_async(kwargs={ "url":url })
     return jsonify({}), 202, {"Location": url_for("Status", taskID=task.id)}
 
 @app.route('/status/<taskID>')
