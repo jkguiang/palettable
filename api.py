@@ -9,7 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 def Clamp(rgbVal):
-  return max(0, min(rgbVal, 255))
+  return int(max(0, min(rgbVal, 255)))
 
 def GetImage(url):
     # Get screenshot
