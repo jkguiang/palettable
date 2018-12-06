@@ -8,6 +8,9 @@ import warnings; warnings.simplefilter('ignore')  # Fix NumPy issues.
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
+def Clamp(rgbVal):
+  return max(0, min(rgbVal, 255))
+
 def GetImage(url):
     # Get screenshot
     chromeOptions = Options()
@@ -44,8 +47,12 @@ def Cluster(nColors, image, data):
     # Retrieve colors and recolored image
     newImage = newColors.reshape(image.shape)
     npColors = np.array(newColors*255.0)
+    rgbaColors = (np.unique(npColors, axis=0)).tolist()
+    colors = []
+    for rgb in rgbaColors:
+        colors.append("#{0:02x}{1:02x}{2:02x}".format(Clamp(rgb[0]), Clamp(rgb[1]), Clamp(rgb[2])))
 
-    return (np.unique(npColors, axis=0)).tolist(), base64.b64encode(newImage)
+    return colors, base64.b64encode(newImage)
 
 if __name__ == "__main__":
     print("done")
