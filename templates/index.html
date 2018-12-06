@@ -100,10 +100,9 @@
                 console.log(data);
                 if (data.state === "SUCCESS" && data.hasOwnProperty("result")) {
                     resultDiv.html("");
-                    var colors = Object.keys(data.result);
+                    var colors = data.result.colors;
                     for (var i = 0; i < colors.length; i++) {
                         var color = colors[i];
-                        var count = data.result[color];
                         resultDiv.append(`
                             <div class="col-md-4 d-flex align-items-stretch">
                               <div class="card" id="${'colorCard'+String(i)}" style="background-color: '${color}'; width: 100%; height: 100px;">
