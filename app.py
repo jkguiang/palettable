@@ -19,48 +19,54 @@ celery = Celery(
 )
 celery.conf.update(app.config)
 
-@celery.task
-def APICall(url):
-    print("passing {} to api".format(url))
-    return api.Parse(url)
+@celery.task(bind=True)
+def APICall(self, url="", nColors=8):
+    # Retrieve image
+    self.update_state(state="PROGRESS",
+                      meta={ "status": "Retrieving image..." })
+    screenshot = api.GetImage(url)
+    # Process image
+    self.update_state(state="PROGRESS",
+                      meta={ "status": "Processing image..." })
+    image = api.ProcImage(screenshot)
+    # Shape data
+    self.update_state(state="PROGRESS",
+                      meta={ "status": "Shaping data..." })
+    data = api.ShapeData(image)
+    # Run clustering algorithm
+    self.update_state(state="PROGRESS",
+                      meta={ "status": "Running clustering algorithm..." })
+    colors, img = api.Cluster(nColors, image, data)
+
+    return {
+             "success": True,
+             "result": { "colors": colors, "img": img }
+           }
 
 @app.route("/", methods=['GET', 'POST'])
 def Index():
-    # response = { "success": False }
-    # if request.method == "POST":
-    #     print("post received")
-    #     url = request.form["url"]
-    #     result = APICall.delay(url)
-    #     return render_template("home.html", response=result.wait())
     return render_template("index.html")
 
 @app.route("/result", methods=['POST'])
 def Result():
-    # response = { "success": False }
-    # if request.method == "POST":
-    #     print("post received")
-    #     url = request.form["url"]
-    #     result = APICall.delay(url)
-    #     return render_template("result.html", response=result.wait())
-    #
-    # return render_template("result.html", response=response)
     if request.data:
         url = request.json["url"]
+        nColors = request.json["nColors"]
     else:
         url = ""
-    print("received {}".format(url))
-    task = APICall.apply_async(args=[url])
-    return jsonify({}), 202, {'Location': url_for('Status', taskID=task.id)}
+        nColors = ""
+    task = APICall.apply_async(kwargs={ "url":url, "nColors":int(nColors) })
+    return jsonify({}), 202, {"Location": url_for("Status", taskID=task.id)}
 
 @app.route('/status/<taskID>')
 def Status(taskID):
-    print("checking status")
     task = APICall.AsyncResult(taskID)
-    print(task.state)
-    print(task.info)
     response = { "state": task.state }
-    if task.state != "FAILURE" and task.info and "result" in task.info:
-        response["result"] = task.info["result"]
+    if task.state != "FAILURE" and task.info:
+        response["status"] = task.info.get("status", "")
+        if "result" in task.info:
+            response["result"] = task.info["result"]
+
     return jsonify(response)
 
 if __name__ == "__main__":

@@ -1,42 +1,51 @@
-import requests
-import bs4 as bs
-import cssutils
-import logging
+import matplotlib.pyplot as plt
+import base64
+import io
+import numpy as np
+import scipy
+from sklearn.cluster import MiniBatchKMeans
+import warnings; warnings.simplefilter('ignore')  # Fix NumPy issues.
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
-def Parse(url):
-    print("API call: url - {}".format(url))
-    # Disable warning messages
-    cssutils.log.setLevel(logging.CRITICAL)
-    # Grab URL and make some soup
-    page = requests.get(url)
-    soup = bs.BeautifulSoup(page.text, "lxml")
-    # Feed the hungry
-    soupKitchen = soup.find_all("link", {"rel":"stylesheet", "href":True})
+def GetImage(url):
+    # Get screenshot
+    chromeOptions = Options()
+    chromeOptions.add_argument("--headless")
+    chromeOptions.add_argument("--window-size=1920x1080")
+    DRIVER = 'chromedriver'
+    driver = webdriver.Chrome(chrome_options=chromeOptions, executable_path=DRIVER) # Make sure this is in path
+    driver.get(url)
+    screenshot = driver.get_screenshot_as_base64()
+    driver.quit()
 
-    # Find all CSS links
-    colors = {}
-    for s in soupKitchen:
-        href = s.get("href")
-        css = requests.get(href)
-        parser = cssutils.CSSParser()
-        parsed = parser.parseString(css.text, href=href)
-        # Parse CSS text for colors
-        for rule in parsed:
-            if rule.type == rule.STYLE_RULE:
-                for prop in rule.style:
-                    if prop.name == "color":
-                        if prop.value not in colors:
-                            colors[prop.value] = 1
-                        else:
-                            colors[prop.value] += 1
-    # Get rid of low-count colors
-    out = {}
-    for c in colors:
-        count = colors[c]
-        if count > 10 and "#" in c:
-            out[c] = count
+    return screenshot
 
-    return { "success": True, "result": out }
+def ProcImage(screenshot):
+    # Read screenshot
+    image = base64.b64decode(screenshot)
+    image = io.BytesIO(image)
+    image = plt.imread(image, format="jpg")
+
+    return image
+
+def ShapeData(image):
+    # Shape data
+    data = image / 255.0 # use 0...1 scale
+    data = data.reshape(image.shape[0] * image.shape[1], image.shape[2])
+
+    return data
+
+def Cluster(nColors, image, data):
+    # K Means Clustering
+    kMeans = MiniBatchKMeans(nColors)
+    kMeans.fit(data)
+    newColors = kMeans.cluster_centers_[kMeans.predict(data)]
+    # Retrieve colors and recolored image
+    newImage = newColors.reshape(image.shape)
+    npColors = np.array(newColors*255.0)
+
+    return (np.unique(npColors, axis=0)).tolist(), base64.b64encode(newImage)
 
 if __name__ == "__main__":
-    Parse("https://stackoverflow.com/questions/20371448/stop-cssutils-from-generating-warning-messages")
+    print("done")
