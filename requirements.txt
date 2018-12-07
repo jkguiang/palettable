@@ -1,7 +1,6 @@
 amqp==2.3.2
 backports.functools-lru-cache==1.5
 billiard==3.5.0.4
-celery==4.2.1
 certifi==2018.10.15
 chardet==3.0.4
 Click==7.0
@@ -14,13 +13,12 @@ kiwisolver==1.0.1
 kombu==4.2.1
 lxml==4.2.5
 MarkupSafe==1.1.0
-matplotlib==2.2.3
 numpy==1.15.4
+opencv-python==3.4.4.19
 Pillow==5.3.0
 pyparsing==2.3.0
 python-dateutil==2.7.5
 pytz==2018.7
-redis==2.10.5
 rq==0.5.6
 scikit-learn==0.20.1
 scipy==1.1.0
