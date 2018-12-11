@@ -1,21 +1,21 @@
 # Flask
 from flask import Flask, render_template, flash, request, url_for, jsonify
-from wtforms import Form, TextField, TextAreaField, validators, StringField, SubmitField
 import os
 # API
 import api
-# Celery
-from celery import Celery
 
 app = Flask(__name__)
 
-def APICall(url="", nColors=8):
+def APICall(url="", img="", nColors=9):
     # Retrieve image
-    image = api.GetImage(url)
+    if not img:
+        img = api.GetImage(url)
+    else:
+        img = api.ProcImage(img)
     # Shape data
-    data = api.GetData(image)
+    data = api.GetData(img)
     # Run clustering algorithm
-    colors = api.Cluster(nColors, image, data)
+    colors = api.Cluster(nColors, img, data)
 
     return { "result": { "colors": colors } }
 
@@ -23,13 +23,12 @@ def APICall(url="", nColors=8):
 def Index():
     return render_template("index.html")
 
-@app.route("/result", methods=['POST'])
-def Result():
-    if request.data:
-        url = request.json["url"]
-    else:
-        url = ""
-    response = APICall(url=url)
+@app.route("/query", methods=['POST'])
+def Query():
+    url = (request.json).get("url", False)
+    img = (request.json).get("img", False)
+    response = APICall(url=url, img=img)
+
     return jsonify(response)
 
 if __name__ == "__main__":
