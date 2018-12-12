@@ -12,7 +12,7 @@ function APICall(type) {
             $("#load-img").hide();
             $("#load").hide();
             console.log(data);
-            Result(data);
+            Result(type, data);
         },
         error: function() {
             alert("Unexpected error");
@@ -22,66 +22,67 @@ function APICall(type) {
         }
     });
 }
-function Result(data) {
+function Result(type, data) {
     var resultDiv = $("#result");
     var resultColors = $("#result-colors");
     var resultURL = $("#result-url");
     if (data.hasOwnProperty("result")) {
         // resultImg.attr("src", "data:image/png;base64,"+data.result.img);
-        resultURL.html($("#url").val());
+        resultURL.html((type === "url") ? $("#url").val() : "Result");
         resultColors.html("");
-        var colors = data.result.colors;
-        var sortColors = [];
+        var colors = (data.result.colors).sort(function(a,b) { return (a.hsl[0]-b.hsl[0])*(a.hsl[1]-b.hsl[1])*(a.hsl[2]-b.hsl[2]) });
         for (var i = 0; i < colors.length; i++) {
-            var color = colors[i];
-            var luma = GetLuma(color); // Get perceived lightness or darkness
-            var txtColor = (luma > 128) ? "#000" : "#fff";
-            sortColors.push({ "luma":luma, "color":color });
+            var rgb = colors[i].rgb;
+            var hex = colors[i].hex;
+            var hsl = colors[i].hsl;
+            colors[i]["lum"] = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+            var txtColor = TextColor(colors[i].lum);
             resultColors.append(`
                 <div class="col-md-4 d-flex align-items-stretch" style="padding-bottom: 5px;">
                   <div class="card" id="${'color-card'+String(i)}" style="width: 100%; height: 100px;">
                     <div class="card-body" id="${'color-body'+String(i)}" style="color: ${txtColor}">
-                      ${color}
+                      ${hex}
                     </div>
                   </div>
                 </div>
             `);
-            $(`#color-card${i}`).css({ "background-color": color });
+            $(`#color-card${i}`).css({ "background-color": hex });
         }
         resultDiv.show();
         // Change website's color scheme
-        SetScheme(sortColors.sort(function(a,b) { return a.luma - b.luma }));
+        SetScheme(colors);
     }
 }
-function SetScheme(sortColors) {
-    if (sortColors.length != 0) {
-        var len = sortColors.length;
+function SetScheme(colors) {
+    if (colors.length != 0) {
+        // var len = colors.length;
+        var bgIndex = 0;
+        var hlIndex = ((colors.length % 2 === 0) ? colors.length/2 : (colors.length-1)/2);
+        for (var i = 0; i < colors.length; i++) {
+            var hsl = colors[i].hsl;
+            var rgb = colors[i].rgb;
+            var lum = colors[i].lum;
+        }
         // Background color
-        var bgColor = sortColors[0].color;
+        var bgHex = colors[bgIndex].hex;
+        var bgLum = colors[bgIndex].lum;
         // Highlight color
-        var hlIndex = ((len % 2 === 0) ? len/2 : (len-1)/2);
-        var hlColor = sortColors[hlIndex].color;
-        var hlLuma = sortColors[hlIndex].luma;
-        // Text color
-        var txtColor = (hlLuma > 176) ? "#000" : "#fff";
+        var hlHex = colors[hlIndex].hex;
+        var hlLum = colors[hlIndex].lum;
         // Apply formatting
-        $("html, body").css("background-color", bgColor);
-        $(".navbar.navbar-expand-md.navbar-dark.bg-primary.fixed-top").attr("style", `background-color: ${hlColor} !important;`);
-        $(":button").css("background-color", hlColor);
-        $("html, body").css("color", txtColor);
-        $("a").css("color", txtColor);
-        $(":button").css("color", txtColor);
+        $("html, body").css("background-color", bgHex);
+        $(".navbar.navbar-expand-md.navbar-dark.bg-primary.fixed-top").attr("style", `background-color: ${hlHex} !important;`);
+        $(":button").css("background-color", hlHex);
+        $("html, body").css("color", TextColor(bgLum));
+        $("a").css("color", TextColor(hlLum));
+        $(":button").css("color", TextColor(hlLum));
+
         return;
     }
 }
-function GetLuma(color) {
-    var c = color.substring(1);      // strip #
-    var rgb = parseInt(c, 16);   // convert rrggbb to decimal
-    var r = (rgb >> 16) & 0xff;  // extract red
-    var g = (rgb >>  8) & 0xff;  // extract green
-    var b = (rgb >>  0) & 0xff;  // extract blue
-
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b; // per ITU-R BT.709
+function TextColor(lum) {
+    // return (hsl[2] > 0.9 || (hsl[1] < 0.7 && hsl[1] > 0.6)) ? "#000" : "#fff";
+    return (lum > 192) ? "#000" : "#fff";
 }
 function CheckInput(type) {
     var input = $(`#${type}`).val();
@@ -106,9 +107,15 @@ function CheckInput(type) {
     }
 }
 function Reset() {
+    // Reset display
     $("#load").hide();
     $("#result").hide();
     $("#main").show();
+    // Reset form
+    $("#img").val("");
+    $("#img-upload").val("");
+    $("#url").val("");
+    $("#submit").attr("disabled", !CheckInput($("input[name=radio-buttons]:checked").val()));
 }
 $(function() {
     // Startup actions

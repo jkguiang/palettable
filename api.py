@@ -3,6 +3,7 @@ import warnings; warnings.simplefilter('ignore')  # Fix NumPy issues.
 from sklearn.cluster import MiniBatchKMeans
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import colorsys
 import base64
 import cv2
 import io
@@ -49,12 +50,15 @@ def Cluster(nColors, image, data):
     kMeans = MiniBatchKMeans(nColors)
     kMeans.fit(data)
     newColors = kMeans.cluster_centers_[kMeans.predict(data)]
-    # Retrieve colors and recolored image
+    # Retrieve colors
     npColors = np.array(newColors*255.0)
-    rgbaColors = (np.unique(npColors, axis=0)).tolist()
+    rgbColors = (np.unique(npColors, axis=0)).tolist()
     colors = []
-    for rgb in rgbaColors:
-        colors.append("#{0:02x}{1:02x}{2:02x}".format(Clamp(rgb[0]), Clamp(rgb[1]), Clamp(rgb[2])))
+    for rgb in rgbColors:
+        r, g, b = [ Clamp(v) for v in rgb ]
+        hex = "#{0:02x}{1:02x}{2:02x}".format(r, g, b)
+        h, l, s = colorsys.rgb_to_hls(r/255.0, g/255.0, b/255.0)
+        colors.append({ "rgb":[r,g,b], "hex":hex, "hsl":[h,s,l] })
 
     return colors
 
