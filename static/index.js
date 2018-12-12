@@ -55,20 +55,45 @@ function Result(type, data) {
 }
 function SetScheme(colors) {
     if (colors.length != 0) {
-        // var len = colors.length;
-        var bgIndex = 0;
-        var hlIndex = ((colors.length % 2 === 0) ? colors.length/2 : (colors.length-1)/2);
-        for (var i = 0; i < colors.length; i++) {
-            var hsl = colors[i].hsl;
-            var rgb = colors[i].rgb;
-            var lum = colors[i].lum;
-        }
+        // Randomly assign colors
+        var bgIndex = Math.floor(Math.random()*(colors.length));
+        var hlIndex = Math.floor(Math.random()*(colors.length));
         // Background color
         var bgHex = colors[bgIndex].hex;
         var bgLum = colors[bgIndex].lum;
+        var bgHSL = colors[bgIndex].hsl;
         // Highlight color
         var hlHex = colors[hlIndex].hex;
         var hlLum = colors[hlIndex].lum;
+        var hlHSL = colors[hlIndex].hsl;
+        // Check for better highlight colors
+        var found = false;
+        var curLumDiff = Math.abs(bgLum - hlLum);
+        var curHSLDiff = [ Math.abs(bgHSL[0] - hlHSL[0]),
+                           Math.abs(bgHSL[1] - hlHSL[1]),
+                           Math.abs(bgHSL[2] - hlHSL[2]) ];
+        var curQuality = (0.5*curLumDiff+0.25*(1/curHSLDiff[0])+0.25*(1/curHSLDiff[1])); // Weighted average of qualities
+        for (var i = 0; i < colors.length; i++) {
+            if (i !== bgIndex) {
+                var hsl = colors[i].hsl;
+                var lum = colors[i].lum;
+                var newLumDiff = Math.abs(bgLum - lum);
+                var newHSLDiff = [ Math.abs(bgHSL[0] - hsl[0]),
+                                   Math.abs(bgHSL[1] - hsl[1]),
+                                   Math.abs(bgHSL[2] - hsl[2]) ];
+                var newQuality = (0.5*newLumDiff+0.25*(1/newHSLDiff[0])+0.25*(1/newHSLDiff[1])); // Weighted average of qualities
+                if (newQuality > curQuality) {
+                    found = true;
+                    hlIndex = i;
+                }
+            }
+        }
+        // Grab new highlight color
+        if (found) {
+            hlHex = colors[hlIndex].hex;
+            hlLum = colors[hlIndex].lum;
+            hlHSL = colors[hlIndex].hsl;
+        }
         // Apply formatting
         $("html, body").css("background-color", bgHex);
         $(".navbar.navbar-expand-md.navbar-dark.bg-primary.fixed-top").attr("style", `background-color: ${hlHex} !important;`);
