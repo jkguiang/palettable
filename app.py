@@ -6,7 +6,7 @@ import api
 
 app = Flask(__name__)
 
-def APICall(url="", img="", nColors=9):
+def APICall(url="", img="", nColors=6):
     # Retrieve image
     if not img:
         img = api.GetImage(url)
