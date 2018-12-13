@@ -27,7 +27,6 @@ function Result(type, data) {
     var resultColors = $("#result-colors");
     var resultURL = $("#result-url");
     if (data.hasOwnProperty("result")) {
-        // resultImg.attr("src", "data:image/png;base64,"+data.result.img);
         resultURL.html((type === "url") ? $("#url").val() : "Result");
         resultColors.html("");
         var colors = (data.result.colors).sort(function(a,b) { return (a.hsl[0]-b.hsl[0])*(a.hsl[1]-b.hsl[1])*(a.hsl[2]-b.hsl[2]) });
@@ -55,59 +54,70 @@ function Result(type, data) {
 }
 function SetScheme(colors) {
     if (colors.length != 0) {
-        // Randomly assign colors
+        // Choose colors
         var bgIndex = Math.floor(Math.random()*(colors.length));
-        var hlIndex = Math.floor(Math.random()*(colors.length));
-        // Background color
+        var hlIndex = PickHighlight(colors, bgIndex);
+        var btIndex = PickHighlight(colors, hlIndex);
+        // Get color properties
         var bgHex = colors[bgIndex].hex;
-        var bgLum = colors[bgIndex].lum;
-        var bgHSL = colors[bgIndex].hsl;
-        // Highlight color
         var hlHex = colors[hlIndex].hex;
+        var btHex = colors[btIndex].hex;
+        var bgLum = colors[bgIndex].lum;
         var hlLum = colors[hlIndex].lum;
-        var hlHSL = colors[hlIndex].hsl;
-        // Check for better highlight colors
-        var found = false;
-        var curLumDiff = Math.abs(bgLum - hlLum);
-        var curHSLDiff = [ Math.abs(bgHSL[0] - hlHSL[0]),
-                           Math.abs(bgHSL[1] - hlHSL[1]),
-                           Math.abs(bgHSL[2] - hlHSL[2]) ];
-        var curQuality = (0.5*curLumDiff+0.25*(1/curHSLDiff[0])+0.25*(1/curHSLDiff[1])); // Weighted average of qualities
-        for (var i = 0; i < colors.length; i++) {
-            if (i !== bgIndex) {
-                var hsl = colors[i].hsl;
-                var lum = colors[i].lum;
-                var newLumDiff = Math.abs(bgLum - lum);
-                var newHSLDiff = [ Math.abs(bgHSL[0] - hsl[0]),
-                                   Math.abs(bgHSL[1] - hsl[1]),
-                                   Math.abs(bgHSL[2] - hsl[2]) ];
-                var newQuality = (0.5*newLumDiff+0.25*(1/newHSLDiff[0])+0.25*(1/newHSLDiff[1])); // Weighted average of qualities
-                if (newQuality > curQuality) {
-                    found = true;
-                    hlIndex = i;
-                }
-            }
-        }
-        // Grab new highlight color
-        if (found) {
-            hlHex = colors[hlIndex].hex;
-            hlLum = colors[hlIndex].lum;
-            hlHSL = colors[hlIndex].hsl;
-        }
-        // Apply formatting
+        var btLum = colors[btIndex].lum;
+        // Apply main formatting
         $("html, body").css("background-color", bgHex);
-        $(".navbar.navbar-expand-md.navbar-dark.bg-primary.fixed-top").attr("style", `background-color: ${hlHex} !important;`);
-        $(":button").css("background-color", hlHex);
         $("html, body").css("color", TextColor(bgLum));
+        // Apply highlight formatting
+        $(".navbar.navbar-expand-md.navbar-dark.fixed-top").attr("style", `background-color: ${hlHex} !important;`);
         $("a").css("color", TextColor(hlLum));
-        $(":button").css("color", TextColor(hlLum));
+        $(".jumbotron").css("background-color", hlHex);
+        $(".jumbotron").css("color", TextColor(hlLum));
+        // Apply additional formatting
+        $(":button").css("background-color", btHex);
+        $(":button").css("border-color", btHex);
+        $(":button").css("color", TextColor(btLum));
 
         return;
     }
 }
 function TextColor(lum) {
-    // return (hsl[2] > 0.9 || (hsl[1] < 0.7 && hsl[1] > 0.6)) ? "#000" : "#fff";
     return (lum > 192) ? "#000" : "#fff";
+}
+function PickHighlight(colors, bgIndex) {
+    // Randomly assign color
+    var hlIndex = Math.floor(Math.random()*(colors.length));
+    if (hlIndex === bgIndex) {
+        hlIndex += ((hlIndex === colors.length) ? -1 : 1);
+    }
+    // Get background color properties
+    var bgLum = colors[bgIndex].lum;
+    var bgHSL = colors[bgIndex].hsl;
+    // Get highlight color properties
+    var hlLum = colors[hlIndex].lum;
+    var hlHSL = colors[hlIndex].hsl;
+    // Check for better highlight colors
+    var curLumDiff = Math.abs(bgLum - hlLum);
+    var curHSLDiff = [ Math.abs(bgHSL[0] - hlHSL[0]),
+                       Math.abs(bgHSL[1] - hlHSL[1]),
+                       Math.abs(bgHSL[2] - hlHSL[2]) ];
+    var curQuality = (0.5*curLumDiff+0.25*(1/curHSLDiff[0])+0.25*(1/curHSLDiff[1])); // Weighted average of qualities
+    for (var i = 0; i < colors.length; i++) {
+        if (i !== bgIndex) {
+            var hsl = colors[i].hsl;
+            var lum = colors[i].lum;
+            var newLumDiff = Math.abs(bgLum - lum);
+            var newHSLDiff = [ Math.abs(bgHSL[0] - hsl[0]),
+                               Math.abs(bgHSL[1] - hsl[1]),
+                               Math.abs(bgHSL[2] - hsl[2]) ];
+            var newQuality = (0.5*newLumDiff+0.25*(1/newHSLDiff[0])+0.25*(1/newHSLDiff[1])); // Weighted average of qualities
+            if (newQuality > curQuality) {
+                hlIndex = i;
+            }
+        }
+    }
+
+    return hlIndex;
 }
 function CheckInput(type) {
     var input = $(`#${type}`).val();
