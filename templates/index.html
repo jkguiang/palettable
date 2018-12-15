@@ -65,10 +65,22 @@
                     <input id="img" name="img" aria-describedby="img" hidden>
                   </div>
                 </form>
-                <div class="text-center">
-                  <button class="btn btn-primary" id="submit">
-                    Submit <i class="fas fa-check-circle"></i>
-                  </button>
+                <div class="row">
+                  <div class="col-md-4 text-center">
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#palette-modal" id="#palette">
+                      Palette <i class="fas fa-palette"></i>
+                    </button>
+                  </div>
+                  <div class="col-md-4 text-center">
+                    <button class="btn btn-primary" id="submit">
+                      Submit <i class="fas fa-check-circle"></i>
+                    </button>
+                  </div>
+                  <div class="col-md-4 text-center">
+                    <button class="btn btn-primary">
+                      Result <i class="fas fa-angle-double-right"></i>
+                    </button>
+                  </div>
                 </div>
             </div>
             <div class="container" id="load">
@@ -85,6 +97,26 @@
                     </button>
                 </div>
             </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="palette-modal" tabindex="-1" role="dialog" aria-labelledby="palette-modal-label" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="palette-modal-label">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                ...
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+              </div>
+            </div>
+          </div>
         </div>
     </body>
     <!-- Javascript -->
