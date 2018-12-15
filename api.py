@@ -1,9 +1,11 @@
 import numpy as np
 import warnings; warnings.simplefilter('ignore')  # Fix NumPy issues.
 from sklearn.cluster import MiniBatchKMeans
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import bs4 as bs
+import requests
+import cssutils
 import colorsys
+import logging
 import base64
 import cv2
 import io
@@ -23,18 +25,46 @@ def ProcImage(screenshot):
 
     return img_sm
 
-def GetImage(url):
-    # Get screenshot
-    chromeOptions = Options()
-    chromeOptions.add_argument("--headless")
-    chromeOptions.add_argument("--window-size=1920x1080")
-    DRIVER = 'chromedriver'
-    driver = webdriver.Chrome(chrome_options=chromeOptions, executable_path=DRIVER) # Make sure this is in path
-    driver.get(url)
-    screenshot = driver.get_screenshot_as_base64()
-    driver.quit()
-    # Process screenshot
-    image = ProcImage(screenshot)
+def ParseCSS(url):
+    """ Parse html content of a URL, grab all relevant CSS color information """
+    # Disable warning messages
+    cssutils.log.setLevel(logging.CRITICAL)
+    # Grab URL and make some soup
+    page = requests.get(url)
+    soup = bs.BeautifulSoup(page.text, "lxml")
+    # Feed the hungry
+    soupKitchen = soup.find_all("link", {"rel":"stylesheet", "href":True})
+     # Find all CSS links
+    image = []
+    for s in soupKitchen:
+        href = s.get("href")
+        # Fix URL if necessary
+        if href[0:8] != "https://":
+            for i, c in enumerate(href):
+                if c not in "https://":
+                    href = "https://"+href[i:]
+                    break
+        # Parse CSS text and count colors
+        try:
+            css = requests.get(href)
+        except Exception as e:
+            continue
+        parser = cssutils.CSSParser()
+        parsed = parser.parseString(css.text, href=href)
+        for rule in parsed:
+            if rule.type == rule.STYLE_RULE:
+                for prop in rule.style:
+                    if prop.name == "background-color" and len(prop.value) <= 7 and "#" in prop.value:
+                        # Turn hex values into np array of RGB values
+                        value = (prop.value).lstrip('#')
+                        if len(value) == 3:
+                            value = "".join((v+v for v in value))
+                        r,g,b = tuple(int(value[i:i+2], 16) for i in (0, 2 ,4))
+                        image.append([r,g,b])
+
+    image.sort(key=lambda rgb: colorsys.rgb_to_hls(*rgb))
+    image = np.array(image)
+    image = image.reshape(image.shape[0],1,image.shape[1]) # Arbitrarily reshape array for use in API
 
     return image
 
@@ -45,7 +75,7 @@ def GetData(image):
 
     return data
 
-def Cluster(nColors, image, data):
+def Cluster(nColors, data):
     # K Means Clustering
     kMeans = MiniBatchKMeans(nColors)
     kMeans.fit(data)

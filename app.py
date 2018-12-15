@@ -9,13 +9,13 @@ app = Flask(__name__)
 def APICall(url="", img="", nColors=6):
     # Retrieve image
     if not img:
-        img = api.GetImage(url)
+        img = api.ParseCSS(url)
     else:
         img = api.ProcImage(img)
     # Shape data
     data = api.GetData(img)
     # Run clustering algorithm
-    colors = api.Cluster(nColors, img, data)
+    colors = api.Cluster(nColors, data)
 
     return { "result": { "colors": colors } }
 
