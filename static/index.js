@@ -39,9 +39,9 @@ function Result(type, data) {
             resultColors.append(`
                 <div class="col-md-4 d-flex align-items-stretch" style="padding-bottom: 5px;">
                   <div class="card" id="${'color-card'+String(i)}" style="width: 100%; height: 100px;">
-                    <div class="card-body" id="${'color-body'+String(i)}" style="color: ${txtColor}">
+                    <a href="#"><div class="card-body" id="${'color-body'+String(i)}" style="color: ${txtColor}">
                       ${hex}
-                    </div>
+                    </div></a>
                   </div>
                 </div>
             `);
@@ -88,7 +88,7 @@ function PickHighlight(colors, bgIndex) {
     // Randomly assign color
     var hlIndex = Math.floor(Math.random()*(colors.length));
     if (hlIndex === bgIndex) {
-        hlIndex += ((hlIndex === colors.length) ? -1 : 1);
+        hlIndex += ((hlIndex === colors.length-1) ? -1 : 1);
     }
     // Get background color properties
     var bgLum = colors[bgIndex].lum;
