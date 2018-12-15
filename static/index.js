@@ -38,15 +38,31 @@ function Result(type, data) {
             var txtColor = TextColor(colors[i].lum);
             resultColors.append(`
                 <div class="col-md-4 d-flex align-items-stretch" style="padding-bottom: 5px;">
-                  <div class="card" id="${'color-card'+String(i)}" style="width: 100%; height: 100px;">
-                    <a href="#"><div class="card-body" id="${'color-body'+String(i)}" style="color: ${txtColor}">
-                      ${hex}
-                    </div></a>
+                  <div class="card" id="color-card${i}" style="width: 100%;">
+                    <a tabindex="0" href="${hex}" id="color-link${i}" name="${i}" data-html="true" data-toggle="popover" data-trigger="focus" data-placement="bottom" data-content="<span>Copied <code>${hex}</code> to clipboard!</span>">
+                      <div class="card-body" id="color-body${i}" style="color: ${txtColor}">
+                        ${hex}
+                        <textarea id="color-code${i}" style="height: 0; width: 0; opacity: 0;" readonly />
+                      </div>
+                    </a>
                   </div>
                 </div>
             `);
             $(`#color-card${i}`).css({ "background-color": hex });
+            $(`#color-code${i}`).val(hex);
         }
+        // Event handler: copy value to clipboard
+        $("a[id^='color-link']").on("click", function(event) {
+            event.preventDefault();
+            $(`#color-code${this.name}`).select();
+            document.execCommand("copy");
+            this.focus();
+        });
+        // Initialize popovers
+        $("[data-toggle='popover']").popover();
+        $(".popover-dismiss").popover({
+            trigger: "focus"
+        });
         resultDiv.show();
         // Change website's color scheme
         SetScheme(colors);
